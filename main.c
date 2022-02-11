@@ -237,6 +237,12 @@ char *suggest_word(Word_list words, Word_list reduced_words) {
     if (reduced_words.num_words == 1){
         return reduced_words.words[0].word;
     }
+    if (reduced_words.num_words <= 5){
+        printf("Top guesses: ");
+        for (int j = 0; j < reduced_words.num_words; j++){
+            printf("%s, ", reduced_words.words[j].word);
+        }
+    }
     double max_info = 0;
     char *max_word = 0;
     for (int i = 0; i < 5757; i++) {
