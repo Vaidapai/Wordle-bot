@@ -21,6 +21,32 @@ typedef struct Word_list {
     int num_words;
 } Word_list;
 
+int* order_of_pattern_traversal(char *pattern){
+    int *result = malloc(sizeof(int)*5);
+    int pointer = 0;
+    for (int i = 0; i < 3; i++){
+        for (int j = 0; j < 5; j++){
+            //checking for g
+            if (i == 0 && pattern[j] == 'G' ){
+                result[pointer] = j;
+                pointer++;
+            }
+            //checking for y
+            if (i == 1 && pattern[j] == 'Y'){
+                result[pointer] = j;
+                pointer++;
+            }
+            //checking for r
+            if (i == 2 && pattern[j] == 'R'){
+                result[pointer] = j;
+                pointer++;
+            }
+        }
+        
+    }
+    return result;
+}
+
 Word_list copy_word_list(Word_list w) {
     Word_list result;
     result.words = malloc(w.num_words*sizeof(struct Word));
@@ -87,38 +113,37 @@ int letter_in_word(char letter, char* word, char start_index) {
     }
     return 0;
 }
+int index_of_lettter(char *word, char letter){
+    for (int i = 0; i < strlen(word); i++){
+        if (word[i] == letter){
+            return i;
+        }
+    }
+    return -1;
+}
 
 double info_gain_times_probability(Word_list reduced_words, int size_of_reduced_words, char * this_word, char * pattern) {
     double words_with_pattern = 0;
     Word word;
-    int counter = 0;
-    char ignored_letters[5];
+    int *order = order_of_pattern_traversal(pattern);
     for (int i = 0; i < reduced_words.num_words; i++) {
         
         word = reduced_words.words[i];
         if (word.word == NULL){
             continue;
         }
-        counter = 0;
-        ignored_letters[0] = '\0';
-        ignored_letters[1] = '\0';
-        ignored_letters[2] = '\0';
-        ignored_letters[3] = '\0';
-        ignored_letters[4] = '\0';
-        for (int j = 0; j < 5; j++){
-            if (pattern[j] == 'G' || pattern[j] == 'Y'){
-                ignored_letters[counter] = word.word[j];
-                counter++;
-            }
-        }
-        for (int letter = 0; letter < 5; letter++) {
-            if (pattern[letter] == 'R') {
-                if (letter_in_word(this_word[letter], word.word, 0) && !letter_in_word(this_word[letter], ignored_letters, 0)) {
+        char new_word[6];
+        strcpy(new_word, word.word);
+        for (int j = 0; j < 5; j++) {
+            int letter = order[j];
+            int index = index_of_lettter(new_word, this_word[letter]);
+            if (pattern[letter] == 'R' ) {
+                if (index >= 0) {
                     break;
                 }
             }
             else if (pattern[letter] == 'Y') {
-                if (!letter_in_word(this_word[letter], word.word, 0)){
+                if (index == -1){
                     break;
                 }
             }
@@ -127,11 +152,16 @@ double info_gain_times_probability(Word_list reduced_words, int size_of_reduced_
                     break;
                 }
             }
-            if (letter == 4) {
-                reduced_words.words[i].word = NULL;
+            if (index >=0){
+                for (int k = index; k < 5-j; k++){
+                    new_word[k] = new_word[k+1];
+                }
+            }
+            
+            if (j == 4) {
                 
                 words_with_pattern += 1;
-                
+                reduced_words.words[i].word = NULL;
             }
         }
     }
@@ -146,42 +176,33 @@ double expected_information(Word_list reduced_words, char *this_word) {
     for (int i = 0; i < 243; i++) {
         EV_info += info_gain_times_probability(reduced_words_cpy, reduced_words.num_words, this_word, all_patterns[i]);
     }
-    printf("%f\n", EV_info);
+    
     return EV_info;
 }
-
 
 
 Word_list reduce_words(Word_list words, char *this_word, char *pattern) {
     Word_list reduced_words;
     reduced_words.words = malloc(sizeof(struct Word) * words.num_words);
     reduced_words.num_words = 0;
-    int counter = 0;
-    char ignored_letters[5];
+    
     char *word;
+    int *order = order_of_pattern_traversal(pattern);
     for (int i = 0; i < words.num_words; i++) {
         word = words.words[i].word;
-     
-        counter = 0;
-        ignored_letters[0] = '\0';
-        ignored_letters[1] = '\0';
-        ignored_letters[2] = '\0';
-        ignored_letters[3] = '\0';
-        ignored_letters[4] = '\0';
-        for (int j = 0; j < 5; j++){
-            if (pattern[j] == 'G' || pattern[j] == 'Y'){
-                ignored_letters[counter] = word[j];
-                counter++;
-            }
-        }
-        for (int letter = 0; letter < 5; letter++) {
+        char new_word[6];
+        strcpy(new_word, word);
+        
+        for (int j = 0; j < 5; j++) {
+            int letter = order[j];
+            int index = index_of_lettter(new_word, this_word[letter]);
             if (pattern[letter] == 'R' ) {
-                if (letter_in_word(this_word[letter], word, 0) && !letter_in_word(this_word[letter], ignored_letters, 0)) {
+                if (index >= 0) {
                     break;
                 }
             }
             else if (pattern[letter] == 'Y') {
-                if (!letter_in_word(this_word[letter], word, 0)){
+                if (index == -1){
                     break;
                 }
             }
@@ -190,7 +211,14 @@ Word_list reduce_words(Word_list words, char *this_word, char *pattern) {
                     break;
                 }
             }
-            if (letter == 4) {
+            if (index >=0){
+                for (int k = index; k < 5-j; k++){
+                    new_word[k] = new_word[k+1];
+                }
+            }
+            
+            
+            if (j == 4) {
                 reduced_words.words[reduced_words.num_words].word = malloc(sizeof(char) * (5 + 1));
                 strcpy(reduced_words.words[reduced_words.num_words].word, word);
                 
@@ -206,6 +234,9 @@ Word_list reduce_words(Word_list words, char *this_word, char *pattern) {
     return reduced_words;
 }
 char *suggest_word(Word_list words, Word_list reduced_words) {
+    if (reduced_words.num_words == 1){
+        return reduced_words.words[0].word;
+    }
     double max_info = 0;
     char *max_word = 0;
     for (int i = 0; i < 5757; i++) {
@@ -228,7 +259,7 @@ void main_loop(){
         char *input = malloc(sizeof(char)*6);
         scanf("%s",input);
         if (input[0] == 'G' && input[1] == 'G' && input[2] == 'G' && input[3] == 'G' && input[4] == 'G'){
-            printf("good job");
+            printf("good job\n");
             return;
         }
         reduced_words = reduce_words(reduced_words, guess, input);
@@ -236,9 +267,9 @@ void main_loop(){
         guess = suggested_word;
         
     }
+    printf("You suck\n");
 }
 int main(int argc, const char * argv[]) {
     main_loop();
-    printf("You suck\n");
     return 0;
 }
