@@ -168,9 +168,8 @@ double info_gain_times_probability(Word_list reduced_words, int size_of_reduced_
     return (words_with_pattern == 0) ? 0 : (log(size_of_reduced_words/words_with_pattern)/log(2))*(words_with_pattern/size_of_reduced_words);
 }
 
-double expected_information(Word_list reduced_words, char *this_word) {
+double expected_information(Word_list reduced_words, char *this_word, char **all_patterns) {
     double EV_info = 0;
-    char **all_patterns = create_all_patterns();
     
     Word_list reduced_words_cpy = copy_word_list(reduced_words);
     for (int i = 0; i < 243; i++) {
@@ -233,7 +232,8 @@ Word_list reduce_words(Word_list words, char *this_word, char *pattern) {
     free(words.words);
     return reduced_words;
 }
-char *suggest_word(Word_list words, Word_list reduced_words) {
+
+char *suggest_word(Word_list words, Word_list reduced_words, char **all_patterns) {
     if (reduced_words.num_words == 1){
         return reduced_words.words[0].word;
     }
@@ -246,7 +246,7 @@ char *suggest_word(Word_list words, Word_list reduced_words) {
     double max_info = 0;
     char *max_word = 0;
     for (int i = 0; i < 5757; i++) {
-        double info = expected_information(reduced_words, words.words[i].word);
+        double info = expected_information(reduced_words, words.words[i].word, all_patterns);
         if (info > max_info) {
             max_info = info;
             max_word = words.words[i].word;
@@ -257,9 +257,11 @@ char *suggest_word(Word_list words, Word_list reduced_words) {
 
 void main_loop() {
     char *guess = "crane";
+    char **all_patterns = create_all_patterns();
     Word_list words = read_words();
     Word_list reduced_words = read_words();
     int win_state = 0;
+    
     for (int i = 0; i < 6; i++){
         printf("Guess: %s\n", guess);
         char *input = malloc(sizeof(char)*6);
@@ -269,16 +271,23 @@ void main_loop() {
             break;
         }
         reduced_words = reduce_words(reduced_words, guess, input);
-        char *suggested_word = suggest_word(words, reduced_words);
+        char *suggested_word = suggest_word(words, reduced_words, all_patterns);
         guess = suggested_word;
         
     }
-    if (win_state = 1){
-        printf("Good job");
+    
+    if (win_state == 1){
+        printf("Good job\n");
     }
     else{
-        printf("Sorry, try again next time");
+        printf("Sorry, try again next time\n");
     }
+    
+    
+    for (int i = 0; i < words.num_words; i++){
+        free(words.words[i].word);
+    }
+    free(words.words);
 }
 int main(int argc, const char * argv[]) {
     main_loop();
