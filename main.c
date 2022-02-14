@@ -255,25 +255,30 @@ char *suggest_word(Word_list words, Word_list reduced_words) {
     return max_word;
 }
 
-void main_loop(){
+void main_loop() {
     char *guess = "crane";
     Word_list words = read_words();
     Word_list reduced_words = read_words();
-    
+    int win_state = 0;
     for (int i = 0; i < 6; i++){
-        printf("%s\n", guess);
+        printf("Guess: %s\n", guess);
         char *input = malloc(sizeof(char)*6);
         scanf("%s",input);
         if (input[0] == 'G' && input[1] == 'G' && input[2] == 'G' && input[3] == 'G' && input[4] == 'G'){
-            printf("good job\n");
-            return;
+            win_state = 1;
+            break;
         }
         reduced_words = reduce_words(reduced_words, guess, input);
         char *suggested_word = suggest_word(words, reduced_words);
         guess = suggested_word;
         
     }
-    printf("You suck\n");
+    if (win_state = 1){
+        printf("Good job");
+    }
+    else{
+        printf("Sorry, try again next time");
+    }
 }
 int main(int argc, const char * argv[]) {
     main_loop();
