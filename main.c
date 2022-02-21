@@ -256,7 +256,7 @@ char *suggest_word(Word_list words, Word_list reduced_words, char **all_patterns
 }
 
 void main_loop() {
-    char *guess = "crane";
+    char *guess = "soare";
     char **all_patterns = create_all_patterns();
     Word_list words = read_words();
     Word_list reduced_words = read_words();
